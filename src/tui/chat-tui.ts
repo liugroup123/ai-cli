@@ -8,7 +8,7 @@ export interface TUIHandlers {
 export class ChatTUI {
   private screen: Widgets.Screen;
   private output: Widgets.Log;
-  private input: Widgets.Textbox;
+  private input: Widgets.TextboxElement;
   private status: Widgets.BoxElement;
 
   constructor(private handlers: TUIHandlers) {
@@ -26,7 +26,7 @@ export class ChatTUI {
       vi: true,
       mouse: true,
       alwaysScroll: true,
-      scrollbar: { ch: ' ', inverse: true }
+      scrollbar: { ch: ' ' }
     });
 
     this.status = blessed.box({ parent: this.screen, top: 0, left: 0, right: 0, height: 1, style: { fg: 'gray' } });
