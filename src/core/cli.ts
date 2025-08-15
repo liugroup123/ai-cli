@@ -145,12 +145,20 @@ export class CLI {
       
       spinner.text = `Generating response with ${model}...`;
       
+      const { printStatusline } = await import('../utils/statusline');
+      const { UsageLogger } = await import('../utils/usage-logger');
+
       const response = await this.aiProvider.generateResponse(fullPrompt, {
         model,
         stream: options.stream !== false
       });
 
       spinner.stop();
+
+      // Statusline + logging
+      printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(fullPrompt) });
+      await new UsageLogger().log({ timestamp: new Date().toISOString(), command: 'chat-single', model, tokensPromptEst: this.aiProvider.estimateTokens(fullPrompt), tokensOutputEst: this.aiProvider.estimateTokens(response) });
+
       const rendered = options.render === 'ansi' ? require('../utils/markdown').renderMarkdownToAnsi(response) : response;
       console.log(chalk.blue('\nAI Response:'));
       console.log(rendered);
@@ -209,6 +217,9 @@ export class CLI {
         const projectCtx = summarizeContext(await loadProjectContext());
         const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
 
+        const { printStatusline } = await import('../utils/statusline');
+        const { UsageLogger } = await import('../utils/usage-logger');
+
         const response = await this.aiProvider.generateResponse(header + input, {
           model,
           sessionId: session.id,
@@ -216,6 +227,11 @@ export class CLI {
         });
 
         spinner.stop();
+
+        // Statusline + logging
+        printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(header + input) });
+        await new UsageLogger().log({ timestamp: new Date().toISOString(), command: 'chat', model, tokensPromptEst: this.aiProvider.estimateTokens(header + input), tokensOutputEst: this.aiProvider.estimateTokens(response) });
+
         const rendered = options.render === 'ansi' ? require('../utils/markdown').renderMarkdownToAnsi(response) : response;
         console.log(chalk.blue('\nAI:'));
         console.log(rendered);
