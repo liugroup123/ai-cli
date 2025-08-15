@@ -103,6 +103,30 @@ async function main() {
         await cli.analyzeCode(options);
       });
 
+    // Slash-Commands runner
+    program
+      .command('run <name>')
+      .description('Run a slash-command template from .ai-cli/commands/<name>.yaml')
+      .option('-a, --arg <key=value...>', 'Variables to interpolate')
+      .option('-m, --model <model>', 'AI model to use')
+      .option('--no-stream', 'Disable streaming responses')
+      .option('-r, --render <mode>', 'Render mode: ansi|md', 'ansi')
+      .action(async (name, opts) => {
+        const { handleRun } = await import('./commands/run');
+        await handleRun({ name, args: opts.arg, model: opts.model, noStream: opts.stream === false, render: opts.render }, async (prompt: string) => {
+          return await cli['aiProvider'].generateResponse(prompt, { model: opts.model || (cli as any)['configManager'].get('defaultModel') || 'gpt-4', stream: false });
+        });
+      });
+
+    // Init PROJECT.md
+    program
+      .command('init-project-md')
+      .description('Scaffold ./.ai-cli/PROJECT.md for global project context')
+      .action(async () => {
+        const { initProjectMd } = await import('./commands/init-project-md');
+        await initProjectMd();
+      });
+
     // Session management
     program
       .command('sessions')
