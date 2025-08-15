@@ -15,6 +15,7 @@ export interface ChatOptions {
   directory?: string;
   stream?: boolean;
   render?: 'ansi' | 'md';
+  tui?: boolean;
 }
 
 export interface ConfigOptions {
@@ -188,7 +189,28 @@ export class CLI {
     console.log(chalk.green(`Using model: ${model}\n`));
 
     const session = await this.sessionManager.createSession(model);
-    
+
+    // TUI mode
+    if (options.tui) {
+      const { ChatTUI } = await import('../tui/chat-tui');
+      const tui = new ChatTUI({
+        onSend: async (text: string) => {
+          // Inject project context
+          const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
+          const projectCtx = summarizeContext(await loadProjectContext());
+          const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
+          const response = await this.aiProvider.generateResponse(header + text, {
+            model,
+            sessionId: session.id,
+            stream: false
+          });
+          return response;
+        }
+      });
+      tui.setStatus(`Model: ${model}  •  /quit 退出`);
+      return;
+    }
+
     while (true) {
       const { input } = await inquirer.prompt([
         {

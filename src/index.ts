@@ -37,6 +37,7 @@ async function main() {
       .option('-d, --directory <directory>', 'Include directory in context')
       .option('--no-stream', 'Disable streaming responses')
       .option('-r, --render <mode>', 'Render mode: ansi|md', 'ansi')
+      .option('--tui', 'Enable lightweight terminal UI', false)
       .action(async (options) => {
         await cli.startChat(options);
       });
