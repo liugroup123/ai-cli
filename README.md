@@ -4,8 +4,10 @@ A powerful AI-powered command line interface tool that brings multiple AI models
 
 ## 🚀 Features
 
-- **Multiple AI Providers**: Support for OpenAI (GPT-4), Anthropic (Claude), and Google (Gemini)
-- **Interactive Chat**: Seamless conversation mode with streaming responses
+- **Multiple AI Providers**: OpenAI (GPT), Anthropic (Claude), Google (Gemini), and Qwen (DashScope)
+- **Interactive Chat + Banner**: Seamless chat with streaming responses and a startup banner splash
+- **Markdown Rendering**: Render AI answers as colorful ANSI in terminal with `--render=ansi`
+- **Gen/Edit with Diff**: `gen` 生成文件、`edit` 安全改文件（彩色 diff 预览、可备份）
 - **Code Analysis**: Analyze codebases with detailed metrics and insights
 - **File Operations**: Read and process files and directories
 - **Session Management**: Save, load, and manage conversation sessions
@@ -16,8 +18,8 @@ A powerful AI-powered command line interface tool that brings multiple AI models
 
 ### Prerequisites
 
-- Node.js 18.0.0 or higher
-- npm or yarn package manager
+- Node.js 18.0.0 or higher (recommend Node 20+)
+- npm (or yarn/pnpm)
 
 ### Install from npm (Coming Soon)
 
@@ -99,6 +101,30 @@ ai-cli chat -d src/ -p "Review this codebase and suggest improvements"
 ```
 
 ### Use Specific Model
+
+```bash
+ai-cli chat -m claude-3-sonnet -p "Write a Python function to sort a list"
+```
+
+### Rendering (Markdown → ANSI)
+
+```bash
+# Render colorful ANSI in terminal (recommended)
+ai-cli chat -p "示例" --render=ansi --no-stream
+
+# Keep raw Markdown
+ai-cli chat -p "示例" --render=md
+```
+
+### Generate and Edit
+
+```bash
+# Generate a file with preview
+ai-cli gen -p "为项目生成一个README" -o README.md
+
+# Edit a file with diff preview (confirm before apply)
+ai-cli edit -f src/app.ts -p "添加/health路由"
+```
 
 ```bash
 ai-cli chat -m claude-3-sonnet -p "Write a Python function to sort a list"
@@ -222,6 +248,7 @@ AI CLI stores configuration in `~/.ai-cli/config.json`. Available options:
 - `OPENAI_API_KEY` - OpenAI API key
 - `ANTHROPIC_API_KEY` - Anthropic API key
 - `GEMINI_API_KEY` - Google Gemini API key
+- `DASHSCOPE_API_KEY`/`QWEN_API_KEY` - Qwen (DashScope) API key（与你的站点 baseURL 匹配）
 - `AI_CLI_CONFIG_DIR` - Custom config directory
 - `AI_CLI_LOG_LEVEL` - Log level (debug, info, warn, error)
 
