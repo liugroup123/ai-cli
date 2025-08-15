@@ -136,7 +136,12 @@ export class CLI {
       }
 
       const model = options.model || this.configManager.get('defaultModel') || 'gpt-4';
-      const fullPrompt = context ? `${context}\n\n${options.prompt}` : options.prompt!;
+      // Load project context
+      const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
+      const projectCtx = summarizeContext(await loadProjectContext());
+
+      const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
+      const fullPrompt = header + (context ? `${context}\n\n${options.prompt}` : options.prompt!);
       
       spinner.text = `Generating response with ${model}...`;
       
@@ -199,7 +204,12 @@ export class CLI {
       const spinner = ora('Thinking...').start();
       
       try {
-        const response = await this.aiProvider.generateResponse(input, {
+        // Inject project context
+        const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
+        const projectCtx = summarizeContext(await loadProjectContext());
+        const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
+
+        const response = await this.aiProvider.generateResponse(header + input, {
           model,
           sessionId: session.id,
           stream: options.stream !== false
