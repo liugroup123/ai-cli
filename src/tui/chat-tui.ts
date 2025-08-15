@@ -1,5 +1,6 @@
 import blessed, { Widgets } from 'blessed';
 import { renderMarkdownToAnsi } from '../utils/markdown';
+import { getTUIBanner } from '../utils/banner';
 import * as readline from 'readline';
 
 export interface TUIHandlers {
@@ -102,21 +103,34 @@ export class ChatTUI {
   }
 
   private showWelcome() {
-    this.append('{center}{bold}Welcome to AI CLI Chat{/bold}{/center}');
+    // 显示炫酷的 ASCII 横幅
+    const banner = getTUIBanner();
+    const bannerLines = banner.split('\n');
+    bannerLines.forEach(line => this.append(line));
+
     this.append('');
+    this.append('{center}{bold}🎯 Welcome to AI CLI Chat Interface 🎯{/bold}{/center}');
+    this.append('');
+
     this.append('{gray-fg}📝 Input Controls:{/gray-fg}');
-    this.append('{gray-fg}  • Enter - Send message{/gray-fg}');
-    this.append('{gray-fg}  • Ctrl+E - Chinese input mode{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Enter{/gray-fg} - Send message{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Ctrl+E{/gray-fg} - Chinese input mode{/gray-fg}');
     this.append('');
+
     this.append('{gray-fg}📜 Scroll Controls:{/gray-fg}');
-    this.append('{gray-fg}  • ↑↓ or k/j - Line by line{/gray-fg}');
-    this.append('{gray-fg}  • Page Up/Down - Fast scroll{/gray-fg}');
-    this.append('{gray-fg}  • Mouse wheel - Scroll up/down{/gray-fg}');
-    this.append('{gray-fg}  • Home/End - Jump to top/bottom{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}↑↓{/gray-fg} or {cyan-fg}k/j{/gray-fg} - Line by line{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Page Up/Down{/gray-fg} - Fast scroll{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Mouse wheel{/gray-fg} - Scroll up/down{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Home/End{/gray-fg} - Jump to top/bottom{/gray-fg}');
     this.append('');
-    this.append('{gray-fg}  • Ctrl+C - Exit{/gray-fg}');
+
+    this.append('{gray-fg}🚪 Exit:{/gray-fg}');
+    this.append('{gray-fg}  • {red-fg}Ctrl+C{/gray-fg} - Exit application{/gray-fg}');
     this.append('');
-    this.append('{green-fg}Start typing your message below...{/green-fg}');
+
+    this.append('{center}{green-fg}{bold}🚀 Ready to chat! Start typing your message below... 🚀{/bold}{/green-fg}{/center}');
+    this.append('');
+    this.append('{center}{gray-fg}═══════════════════════════════════════════════════════════════════════════════{/gray-fg}{/center}');
     this.append('');
   }
 
