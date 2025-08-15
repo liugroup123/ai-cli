@@ -157,7 +157,9 @@ export class CLI {
       spinner.stop();
 
       // Statusline + logging
-      printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(fullPrompt) });
+      // Plain statusline on Windows CMD / non-UTF8 terminals
+      const plain = process.env.AI_CLI_PLAIN === '1';
+      printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(fullPrompt) }, plain);
       await new UsageLogger().log({ timestamp: new Date().toISOString(), command: 'chat-single', model, tokensPromptEst: this.aiProvider.estimateTokens(fullPrompt), tokensOutputEst: this.aiProvider.estimateTokens(response) });
 
       const rendered = options.render === 'ansi' ? require('../utils/markdown').renderMarkdownToAnsi(response) : response;
@@ -207,7 +209,7 @@ export class CLI {
           return response;
         }
       });
-      tui.setStatus(`Model: ${model}  •  /quit 退出`);
+      tui.setStatus(`Model: ${model} | press q or Ctrl+C to exit`);
       return;
     }
 
@@ -251,7 +253,8 @@ export class CLI {
         spinner.stop();
 
         // Statusline + logging
-        printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(header + input) });
+        const plain = process.env.AI_CLI_PLAIN === '1';
+        printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(header + input) }, plain);
         await new UsageLogger().log({ timestamp: new Date().toISOString(), command: 'chat', model, tokensPromptEst: this.aiProvider.estimateTokens(header + input), tokensOutputEst: this.aiProvider.estimateTokens(response) });
 
         const rendered = options.render === 'ansi' ? require('../utils/markdown').renderMarkdownToAnsi(response) : response;
