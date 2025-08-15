@@ -60,7 +60,8 @@ export class ChatTUI {
         style: { bg: 'gray' },
         track: { bg: 'black' }
       },
-      label: ' Chat History (↑↓ to scroll, mouse wheel supported) '
+      label: ' Chat History (Click here or press Tab to scroll with ↑↓) ',
+      focusable: true  // 让聊天区域可以获得焦点
     });
 
     this.status = blessed.box({
@@ -83,7 +84,7 @@ export class ChatTUI {
       inputOnFocus: true,
       border: { type: 'line' },
       style: { fg: theme.inputFg, bg: theme.inputBg },
-      keys: true,
+      keys: true,  // 启用键盘处理
       mouse: true,
       label: ' Message (Enter to send, Ctrl+E for Chinese) '
     });
@@ -118,9 +119,11 @@ export class ChatTUI {
     this.append('');
 
     this.append('{gray-fg}📜 Scroll Controls:{/gray-fg}');
-    this.append('{gray-fg}  • {cyan-fg}↑↓{/gray-fg} or {cyan-fg}k/j{/gray-fg} - Line by line{/gray-fg}');
-    this.append('{gray-fg}  • {cyan-fg}Page Up/Down{/gray-fg} - Fast scroll{/gray-fg}');
-    this.append('{gray-fg}  • {cyan-fg}Mouse wheel{/gray-fg} - Scroll up/down{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Tab{/gray-fg} - Switch between input and chat area{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Click{/gray-fg} chat area to focus it for scrolling{/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}↑↓{/gray-fg} or {cyan-fg}k/j{/gray-fg} - Line by line scroll (when chat focused){/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Page Up/Down{/gray-fg} - Fast scroll (10 lines){/gray-fg}');
+    this.append('{gray-fg}  • {cyan-fg}Mouse wheel{/gray-fg} - Scroll in chat area{/gray-fg}');
     this.append('{gray-fg}  • {cyan-fg}Home/End{/gray-fg} - Jump to top/bottom{/gray-fg}');
     this.append('');
 
@@ -178,7 +181,67 @@ export class ChatTUI {
       this.input.readInput();
     });
 
-    // Enhanced scroll controls for output area
+    // 简化的全局键盘事件处理
+    this.screen.key(['up'], () => {
+      this.output.scroll(-1);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['down'], () => {
+      this.output.scroll(1);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['k'], () => {
+      this.output.scroll(-1);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['j'], () => {
+      this.output.scroll(1);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['pageup'], () => {
+      this.output.scroll(-10);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['pagedown'], () => {
+      this.output.scroll(10);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['home'], () => {
+      this.output.scrollTo(0);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.screen.key(['end'], () => {
+      this.output.setScrollPerc(100);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    // Tab 键切换焦点
+    this.screen.key(['tab'], () => {
+      if (this.screen.focused === this.input) {
+        this.output.focus();
+      } else {
+        this.input.focus();
+        this.input.readInput();
+      }
+      this.screen.render();
+    });
+
+    // 聊天区域的键盘事件处理
     this.output.key(['up', 'k'], () => {
       this.output.scroll(-1);
       this.updateScrollStatus();
@@ -203,7 +266,19 @@ export class ChatTUI {
       this.screen.render();
     });
 
-    // Mouse wheel support
+    this.output.key(['home'], () => {
+      this.output.scrollTo(0);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    this.output.key(['end'], () => {
+      this.output.setScrollPerc(100);
+      this.updateScrollStatus();
+      this.screen.render();
+    });
+
+    // Mouse wheel support for output area
     this.output.on('wheelup', () => {
       this.output.scroll(-3);
       this.updateScrollStatus();
@@ -216,16 +291,9 @@ export class ChatTUI {
       this.screen.render();
     });
 
-    // Home/End keys for quick navigation
-    this.output.key(['home'], () => {
-      this.output.scrollTo(0);
-      this.updateScrollStatus();
-      this.screen.render();
-    });
-
-    this.output.key(['end'], () => {
-      this.output.setScrollPerc(100);
-      this.updateScrollStatus();
+    // 点击聊天区域时获得焦点
+    this.output.on('click', () => {
+      this.output.focus();
       this.screen.render();
     });
   }
