@@ -76,7 +76,8 @@ export async function handleRun(options: RunOptions, generate: (prompt: string) 
   // Statusline + logging
   const { printStatusline } = await import('../utils/statusline');
   const { UsageLogger } = await import('../utils/usage-logger');
-  printStatusline({ model: options.model || 'default', tokensEst: 0 });
+  const plain = process.env.AI_CLI_PLAIN === '1';
+  printStatusline({ model: options.model || 'default', tokensEst: 0 }, plain);
   await new UsageLogger().log({ timestamp: new Date().toISOString(), command: `run:${options.name}`, model: options.model, tokensPromptEst: 0, tokensOutputEst: 0 });
 
   const rendered = (options.render ?? 'ansi') === 'ansi' ? renderMarkdownToAnsi(result) : result;
