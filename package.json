@@ -31,7 +31,9 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.3",
     "@google/generative-ai": "^0.15.0",
+    "@types/blessed": "^0.1.25",
     "@types/diff": "^7.0.2",
+    "blessed": "^0.1.81",
     "chalk": "^5.3.0",
     "cli-highlight": "^2.1.11",
     "commander": "^11.1.0",
