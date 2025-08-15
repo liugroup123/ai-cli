@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  ai-cli:
+    build: .
+    container_name: ai-cli
+    environment:
+      - NODE_ENV=production
+      - AI_CLI_CONFIG_DIR=/app/.ai-cli
+      # Add your API keys here or use .env file
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      # Mount config directory to persist settings
+      - ai-cli-config:/app/.ai-cli
+      # Mount current directory for file operations
+      - .:/workspace:ro
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: ["chat"]
+
+  # Development service
+  ai-cli-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ai-cli-dev
+    environment:
+      - NODE_ENV=development
+      - AI_CLI_CONFIG_DIR=/app/.ai-cli
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ai-cli-config:/app/.ai-cli
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: ["npm", "run", "dev"]
+
+volumes:
+  ai-cli-config:

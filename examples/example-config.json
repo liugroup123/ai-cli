@@ -1,0 +1,21 @@
+{
+  "defaultModel": "gpt-4",
+  "maxTokens": 4096,
+  "temperature": 0.7,
+  "theme": "auto",
+  "streaming": true,
+  "maxFileSize": 1048576,
+  "excludePatterns": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "*.log",
+    ".env*",
+    "coverage/**",
+    ".nyc_output/**",
+    "*.lock"
+  ],
+  "autoSave": true,
+  "maxSessions": 50
+}
