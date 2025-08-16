@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { join, extname } from 'path';
-import { FileManager, FileInfo } from './file-manager';
+import { FileManager, FileInfo } from './file-manager.js';
 
 export interface CodeMetrics {
   totalFiles: number;

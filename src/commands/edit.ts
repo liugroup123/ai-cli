@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { diffLines } from 'diff';
-import { FileManager } from '../core/file-manager';
+import { FileManager } from '../core/file-manager.js';
 
 export interface EditOptions {
   file: string;

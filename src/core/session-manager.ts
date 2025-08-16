@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { ConfigManager } from './config';
-import { ChatMessage } from './ai-provider';
+import { ConfigManager } from './config.js';
+import { ChatMessage } from './ai-provider.js';
 
 export interface Session {
   id: string;

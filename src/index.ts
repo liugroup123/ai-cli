@@ -3,10 +3,10 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { config } from 'dotenv';
-import { CLI } from './core/cli';
-import { ConfigManager } from './core/config';
-import { Logger } from './utils/logger';
-import { printBanner } from './utils/banner';
+import { CLI } from './core/cli.js';
+import { ConfigManager } from './core/config.js';
+import { Logger } from './utils/logger.js';
+import { printBanner } from './utils/banner.js';
 
 // Load environment variables
 config();
@@ -72,7 +72,7 @@ async function main() {
       .option('--apply', 'Apply without confirmation', false)
       .option('--backup', 'Create .bak backup if file exists', true)
       .action(async (opts) => {
-        const { handleGen } = await import('./commands/gen');
+        const { handleGen } = await import('./commands/gen.js');
         await handleGen(opts, async (prompt: string) => {
           return await cli['aiProvider'].generateResponse(prompt, { model: opts.model || (cli as any)['configManager'].get('defaultModel') || 'gpt-4', stream: false });
         });
@@ -87,7 +87,7 @@ async function main() {
       .option('--apply', 'Apply without confirmation', false)
       .option('--backup', 'Create .bak backup before writing', true)
       .action(async (opts) => {
-        const { handleEdit } = await import('./commands/edit');
+        const { handleEdit } = await import('./commands/edit.js');
         await handleEdit(opts, async (original: string, prompt: string) => {
           const full = `You are a code editor. Modify the following file according to the instructions. Return the FULL updated file content only, no explanations.\n\nInstructions:\n${prompt}\n\nFile content:\n${original}`;
           return await cli['aiProvider'].generateResponse(full, { model: (cli as any)['configManager'].get('defaultModel') || 'gpt-4', stream: false });
@@ -113,7 +113,7 @@ async function main() {
       .option('--no-stream', 'Disable streaming responses')
       .option('-r, --render <mode>', 'Render mode: ansi|md', 'ansi')
       .action(async (name, opts) => {
-        const { handleRun } = await import('./commands/run');
+        const { handleRun } = await import('./commands/run.js');
         await handleRun({ name, args: opts.arg, model: opts.model, noStream: opts.stream === false, render: opts.render }, async (prompt: string) => {
           return await cli['aiProvider'].generateResponse(prompt, { model: opts.model || (cli as any)['configManager'].get('defaultModel') || 'gpt-4', stream: false });
         });
@@ -124,7 +124,7 @@ async function main() {
       .command('init-project-md')
       .description('Scaffold ./.ai-cli/PROJECT.md for global project context')
       .action(async () => {
-        const { initProjectMd } = await import('./commands/init-project-md');
+        const { initProjectMd } = await import('./commands/init-project-md.js');
         await initProjectMd();
       });
 

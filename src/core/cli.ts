@@ -1,12 +1,12 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import ora from 'ora';
-import { ConfigManager } from './config';
-import { Logger } from '../utils/logger';
-import { AIProvider } from './ai-provider';
-import { FileManager } from './file-manager';
-import { SessionManager } from './session-manager';
-import { CodeAnalyzer } from './code-analyzer';
+import { ConfigManager } from './config.js';
+import { Logger } from '../utils/logger.js';
+import { AIProvider } from './ai-provider.js';
+import { FileManager } from './file-manager.js';
+import { SessionManager } from './session-manager.js';
+import { CodeAnalyzer } from './code-analyzer.js';
 
 export interface ChatOptions {
   model?: string;
@@ -138,7 +138,7 @@ export class CLI {
 
       const model = options.model || this.configManager.get('defaultModel') || 'gpt-4';
       // Load project context
-      const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
+      const { loadProjectContext, summarizeContext } = await import('../utils/project-context.js');
       const projectCtx = summarizeContext(await loadProjectContext());
 
       const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
@@ -146,8 +146,8 @@ export class CLI {
       
       spinner.text = `Generating response with ${model}...`;
       
-      const { printStatusline } = await import('../utils/statusline');
-      const { UsageLogger } = await import('../utils/usage-logger');
+      const { printStatusline } = await import('../utils/statusline.js');
+      const { UsageLogger } = await import('../utils/usage-logger.js');
 
       const response = await this.aiProvider.generateResponse(fullPrompt, {
         model,
@@ -192,25 +192,52 @@ export class CLI {
 
     const session = await this.sessionManager.createSession(model);
 
-    // TUI mode
+    // TUI mode - choose between Gemini-style React and legacy
     if (options.tui) {
-      const { ChatTUI } = await import('../tui/chat-tui');
-      const tui = new ChatTUI({
-        onSend: async (text: string) => {
-          // Inject project context
-          const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
-          const projectCtx = summarizeContext(await loadProjectContext());
-          const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
-          const response = await this.aiProvider.generateResponse(header + text, {
-            model,
-            sessionId: session.id,
-            stream: false
-          });
-          return response;
-        }
-      });
-      tui.setStatus(`Model: ${model} | press q or Ctrl+C to exit`);
-      return;
+      const useGeminiTUI = process.env.AI_CLI_USE_LEGACY_TUI !== 'true'; // Default to Gemini-style TUI
+
+      if (useGeminiTUI) {
+        // Gemini CLI style React + Ink TUI
+        const { GeminiStyleTUI } = await import('../tui/gemini-style-tui.js');
+        const tui = new GeminiStyleTUI({
+          handlers: {
+            onSend: async (text: string) => {
+              // Inject project context
+              const { loadProjectContext, summarizeContext } = await import('../utils/project-context.js');
+              const projectCtx = summarizeContext(await loadProjectContext());
+              const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
+              const response = await this.aiProvider.generateResponse(header + text, {
+                model,
+                sessionId: session.id,
+                stream: false
+              });
+              return response;
+            }
+          },
+          initialStatus: `Model: ${model} | Ready to chat`
+        });
+        tui.start();
+        return;
+      } else {
+        // Legacy blessed TUI
+        const { ChatTUI } = await import('../tui/chat-tui.js');
+        const tui = new ChatTUI({
+          onSend: async (text: string) => {
+            // Inject project context
+            const { loadProjectContext, summarizeContext } = await import('../utils/project-context.js');
+            const projectCtx = summarizeContext(await loadProjectContext());
+            const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
+            const response = await this.aiProvider.generateResponse(header + text, {
+              model,
+              sessionId: session.id,
+              stream: false
+            });
+            return response;
+          }
+        });
+        tui.setStatus(`Model: ${model} | press q or Ctrl+C to exit`);
+        return;
+      }
     }
 
     while (true) {
@@ -237,12 +264,12 @@ export class CLI {
       
       try {
         // Inject project context
-        const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
+        const { loadProjectContext, summarizeContext } = await import('../utils/project-context.js');
         const projectCtx = summarizeContext(await loadProjectContext());
         const header = projectCtx ? `### Project Context\n${projectCtx}\n\n` : '';
 
-        const { printStatusline } = await import('../utils/statusline');
-        const { UsageLogger } = await import('../utils/usage-logger');
+        const { printStatusline } = await import('../utils/statusline.js');
+        const { UsageLogger } = await import('../utils/usage-logger.js');
 
         const response = await this.aiProvider.generateResponse(header + input, {
           model,

@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import YAML from 'yaml';
-import { FileManager } from '../core/file-manager';
-import { interpolate } from '../utils/template';
-import { renderMarkdownToAnsi } from '../utils/markdown';
+import { FileManager } from '../core/file-manager.js';
+import { interpolate } from '../utils/template.js';
+import { renderMarkdownToAnsi } from '../utils/markdown.js';
 
 export interface RunOptions {
   name: string;
@@ -67,15 +67,15 @@ export async function handleRun(options: RunOptions, generate: (prompt: string) 
   const prompt = interpolate(tpl.prompt, vars) + (context ? `\n\n### Context\n${context}` : '');
 
   // Inject Project Context
-  const { loadProjectContext, summarizeContext } = await import('../utils/project-context');
+  const { loadProjectContext, summarizeContext } = await import('../utils/project-context.js');
   const projectCtx = summarizeContext(await loadProjectContext(cwd));
   const finalPrompt = (projectCtx ? `### Project Context\n${projectCtx}\n\n` : '') + prompt;
 
   const result = await generate(finalPrompt);
 
   // Statusline + logging
-  const { printStatusline } = await import('../utils/statusline');
-  const { UsageLogger } = await import('../utils/usage-logger');
+  const { printStatusline } = await import('../utils/statusline.js');
+  const { UsageLogger } = await import('../utils/usage-logger.js');
   const plain = process.env.AI_CLI_PLAIN === '1';
   printStatusline({ model: options.model || 'default', tokensEst: 0 }, plain);
   await new UsageLogger().log({ timestamp: new Date().toISOString(), command: `run:${options.name}`, model: options.model, tokensPromptEst: 0, tokensOutputEst: 0 });

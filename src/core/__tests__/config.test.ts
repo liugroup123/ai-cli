@@ -1,4 +1,4 @@
-import { ConfigManager } from '../config';
+import { ConfigManager } from '../config.js';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { promises as fs } from 'fs';

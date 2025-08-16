@@ -5,12 +5,14 @@ A powerful AI-powered command line interface tool that brings multiple AI models
 ## 🚀 Features
 
 - **Multiple AI Providers**: OpenAI (GPT), Anthropic (Claude), Google (Gemini), and Qwen (DashScope)
+- **Gemini-Style TUI**: React + Ink based terminal interface like Google Gemini CLI
 - **Interactive Chat + Banner**: Seamless chat with streaming responses and a startup banner splash
 - **Markdown Rendering**: Render AI answers as colorful ANSI in terminal with `--render=ansi`
 - **Gen/Edit with Diff**: `gen` 生成文件、`edit` 安全改文件（彩色 diff 预览、可备份）
 - **Code Analysis**: Analyze codebases with detailed metrics and insights
 - **File Operations**: Read and process files and directories
 - **Session Management**: Save, load, and manage conversation sessions
+- **Dual UI Options**: Choose between Gemini-style React TUI or legacy blessed TUI
 - **Configurable**: Extensive configuration options for personalization
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 
@@ -137,6 +139,12 @@ ai-cli chat -m claude-3-sonnet -p "Write a Python function to sort a list"
 ```bash
 # Start interactive chat (default)
 ai-cli chat
+
+# Start with Gemini-style React TUI (default)
+ai-cli chat --tui
+
+# Use legacy blessed TUI
+AI_CLI_USE_LEGACY_TUI=true ai-cli chat --tui
 
 # Single prompt mode
 ai-cli chat -p "Your prompt here"

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { FileManager } from '../core/file-manager';
-import { renderMarkdownToAnsi } from '../utils/markdown';
+import { FileManager } from '../core/file-manager.js';
+import { renderMarkdownToAnsi } from '../utils/markdown.js';
 
 export interface GenOptions {
   prompt: string;

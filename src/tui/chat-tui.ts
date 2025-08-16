@@ -1,6 +1,6 @@
 import blessed, { Widgets } from 'blessed';
-import { renderMarkdownToAnsi } from '../utils/markdown';
-import { getTUIBanner } from '../utils/banner';
+import { renderMarkdownToAnsi } from '../utils/markdown.js';
+import { getTUIBanner } from '../utils/banner.js';
 import * as readline from 'readline';
 
 export interface TUIHandlers {
