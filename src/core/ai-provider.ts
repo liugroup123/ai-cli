@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigManager } from './config.js';
+import { createToolsIntegration, AIToolsIntegration, enhanceAIPromptWithTools } from './tools/ai-tools-integration.js';
 
 export interface AIModel {
   name: string;
@@ -16,6 +17,8 @@ export interface GenerateOptions {
   stream?: boolean;
   maxTokens?: number;
   temperature?: number;
+  enableTools?: boolean;
+  workspaceRoot?: string;
 }
 
 export interface ChatMessage {
@@ -75,24 +78,39 @@ export class AIProvider {
   }
 
   async generateResponse(prompt: string, options: GenerateOptions): Promise<string> {
-    const { model, sessionId, stream = true } = options;
+    const { model, sessionId, stream = true, enableTools = false, workspaceRoot } = options;
+
+    // Initialize tools if enabled
+    let toolsIntegration: AIToolsIntegration | null = null;
+    if (enableTools && workspaceRoot) {
+      toolsIntegration = createToolsIntegration(workspaceRoot, true);
+      await toolsIntegration.initialize();
+      console.log('🔧 Tools enabled for AI conversation');
+    }
+
+    // Enhance prompt with tool information if tools are enabled
+    let enhancedPrompt = prompt;
+    if (toolsIntegration) {
+      const availableTools = toolsIntegration.getToolSchemas();
+      enhancedPrompt = enhanceAIPromptWithTools(prompt, availableTools);
+    }
 
     // Get conversation history if sessionId provided
     const messages = sessionId ? this.getConversationHistory(sessionId) : [];
-    messages.push({ role: 'user', content: prompt });
+    messages.push({ role: 'user', content: enhancedPrompt });
 
     try {
       let response: string;
 
       if (model.startsWith('gpt-')) {
-        response = await this.generateOpenAIResponse(messages, options);
+        response = await this.generateOpenAIResponse(messages, options, toolsIntegration);
       } else if (model.startsWith('claude-')) {
-        response = await this.generateAnthropicResponse(messages, options);
+        response = await this.generateAnthropicResponse(messages, options, toolsIntegration);
       } else if (model.startsWith('gemini-')) {
         response = await this.generateGeminiResponse(messages, options);
       } else if (model.startsWith('qwen-')) {
         if (!this.qwenOpenAI) throw new Error('Qwen not configured');
-        response = await this.generateOpenAIResponseWithClient(this.qwenOpenAI, messages, options);
+        response = await this.generateOpenAIResponseWithClient(this.qwenOpenAI, messages, options, toolsIntegration);
       } else {
         throw new Error(`Unsupported model: ${model}`);
       }
@@ -103,18 +121,31 @@ export class AIProvider {
         this.conversations.set(sessionId, messages);
       }
 
+      // Cleanup tools
+      if (toolsIntegration) {
+        await toolsIntegration.shutdown();
+      }
+
       return response;
     } catch (error) {
+      if (toolsIntegration) {
+        await toolsIntegration.shutdown();
+      }
       throw new Error(`AI generation failed: ${error instanceof Error ? error.message : error}`);
     }
   }
 
-  private async generateOpenAIResponse(messages: ChatMessage[], options: GenerateOptions): Promise<string> {
+  private async generateOpenAIResponse(
+    messages: ChatMessage[],
+    options: GenerateOptions,
+    toolsIntegration?: AIToolsIntegration | null
+  ): Promise<string> {
     if (!this.openai) {
       throw new Error('OpenAI not configured');
     }
 
-    const response = await this.openai.chat.completions.create({
+    // Prepare request with optional tools
+    const requestParams: any = {
       model: options.model,
       messages: messages.map(msg => ({
         role: msg.role,
@@ -123,7 +154,19 @@ export class AIProvider {
       max_tokens: options.maxTokens || this.configManager.get('maxTokens'),
       temperature: options.temperature || this.configManager.get('temperature'),
       stream: options.stream && this.configManager.get('streaming')
-    });
+    };
+
+    // Add tools if available
+    if (toolsIntegration) {
+      const tools = toolsIntegration.getOpenAIFunctions();
+      if (tools.length > 0) {
+        requestParams.functions = tools;
+        requestParams.function_call = 'auto';
+        console.log(`🔧 Available tools: ${tools.map(t => t.name).join(', ')}`);
+      }
+    }
+
+    const response = await this.openai.chat.completions.create(requestParams);
 
     if (options.stream && this.configManager.get('streaming')) {
       let fullResponse = '';
@@ -134,11 +177,46 @@ export class AIProvider {
       }
       return fullResponse;
     } else {
-      return (response as any).choices[0]?.message?.content || '';
+      const message = (response as any).choices[0]?.message;
+
+      // Handle function calls
+      if (message?.function_call && toolsIntegration) {
+        console.log(`🔧 AI wants to call tool: ${message.function_call.name}`);
+
+        const toolCall = {
+          name: message.function_call.name,
+          parameters: JSON.parse(message.function_call.arguments || '{}')
+        };
+
+        const toolResults = await toolsIntegration.executeToolCalls([toolCall]);
+        const formattedResults = toolsIntegration.formatToolResultsForAI(toolResults);
+
+        // Continue conversation with tool results
+        const followUpMessages = [
+          ...messages,
+          { role: 'assistant', content: message.content || '', function_call: message.function_call },
+          { role: 'function', name: message.function_call.name, content: formattedResults }
+        ];
+
+        const followUpResponse = await this.openai.chat.completions.create({
+          ...requestParams,
+          messages: followUpMessages,
+          function_call: 'none' // Don't call tools again
+        });
+
+        return (followUpResponse as any).choices[0]?.message?.content || '';
+      }
+
+      return message?.content || '';
     }
   }
 
-  private async generateOpenAIResponseWithClient(client: OpenAI, messages: ChatMessage[], options: GenerateOptions): Promise<string> {
+  private async generateOpenAIResponseWithClient(
+    client: OpenAI,
+    messages: ChatMessage[],
+    options: GenerateOptions,
+    toolsIntegration?: AIToolsIntegration | null
+  ): Promise<string> {
     const response = await client.chat.completions.create({
       model: options.model,
       messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
@@ -160,7 +238,11 @@ export class AIProvider {
     }
   }
 
-  private async generateAnthropicResponse(messages: ChatMessage[], options: GenerateOptions): Promise<string> {
+  private async generateAnthropicResponse(
+    messages: ChatMessage[],
+    options: GenerateOptions,
+    toolsIntegration?: AIToolsIntegration | null
+  ): Promise<string> {
     if (!this.anthropic) {
       throw new Error('Anthropic not configured');
     }

@@ -151,7 +151,9 @@ export class CLI {
 
       const response = await this.aiProvider.generateResponse(fullPrompt, {
         model,
-        stream: options.stream !== false
+        stream: options.stream !== false,
+        enableTools: true,
+        workspaceRoot: process.cwd()
       });
 
       spinner.stop();
@@ -162,7 +164,7 @@ export class CLI {
       printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(fullPrompt) }, plain);
       await new UsageLogger().log({ timestamp: new Date().toISOString(), command: 'chat-single', model, tokensPromptEst: this.aiProvider.estimateTokens(fullPrompt), tokensOutputEst: this.aiProvider.estimateTokens(response) });
 
-      const rendered = options.render === 'ansi' ? require('../utils/markdown').renderMarkdownToAnsi(response) : response;
+      const rendered = options.render === 'ansi' ? (await import('../utils/markdown.js')).renderMarkdownToAnsi(response) : response;
       console.log(chalk.blue('\nAI Response:'));
       console.log(rendered);
       
@@ -209,7 +211,9 @@ export class CLI {
               const response = await this.aiProvider.generateResponse(header + text, {
                 model,
                 sessionId: session.id,
-                stream: false
+                stream: false,
+                enableTools: true,
+                workspaceRoot: process.cwd()
               });
               return response;
             }
@@ -230,7 +234,9 @@ export class CLI {
             const response = await this.aiProvider.generateResponse(header + text, {
               model,
               sessionId: session.id,
-              stream: false
+              stream: false,
+              enableTools: true,
+              workspaceRoot: process.cwd()
             });
             return response;
           }
@@ -274,7 +280,9 @@ export class CLI {
         const response = await this.aiProvider.generateResponse(header + input, {
           model,
           sessionId: session.id,
-          stream: options.stream !== false
+          stream: options.stream !== false,
+          enableTools: true,
+          workspaceRoot: process.cwd()
         });
 
         spinner.stop();
@@ -284,7 +292,7 @@ export class CLI {
         printStatusline({ model, tokensEst: this.aiProvider.estimateTokens(header + input) }, plain);
         await new UsageLogger().log({ timestamp: new Date().toISOString(), command: 'chat', model, tokensPromptEst: this.aiProvider.estimateTokens(header + input), tokensOutputEst: this.aiProvider.estimateTokens(response) });
 
-        const rendered = options.render === 'ansi' ? require('../utils/markdown').renderMarkdownToAnsi(response) : response;
+        const rendered = options.render === 'ansi' ? (await import('../utils/markdown.js')).renderMarkdownToAnsi(response) : response;
         console.log(chalk.blue('\nAI:'));
         console.log(rendered);
         console.log(); // Empty line for readability
