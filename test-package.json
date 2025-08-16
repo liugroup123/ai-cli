@@ -1,0 +1,18 @@
+{
+  "name": "ai-cli-hello-world",
+  "version": "1.0.0",
+  "description": "Hello World project created by AI CLI tools",
+  "main": "hello.ts",
+  "scripts": {
+    "start": "ts-node hello.ts",
+    "build": "tsc hello.ts",
+    "test": "echo \"Hello World test\""
+  },
+  "keywords": ["ai-cli", "hello-world", "typescript"],
+  "author": "AI CLI Tools",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0"
+  }
+}
